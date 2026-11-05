@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   lint:
     # 快速 dtb 语法/引用校验 (~3 分钟), 失败则不进全量构建
@@ -67,21 +70,12 @@ jobs:
           cp arch/arm64/boot/Image.gz ../out-Image.gz
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
 
-      - name: Upload kernel artifacts (always, survive bootimg failures)
-        uses: actions/upload-artifact@v4
-        with:
-          name: z40pro-kernel-v${{ github.run_number }}
-          path: |
-            out-Image.gz
-            out-z40pro.dtb
-          if-no-files-found: error
-
       - name: Assemble boot.img
         run: bash scripts/build-initramfs.sh out-z40pro.dtb out-Image.gz out
 
-      - name: Upload boot.img
-        uses: actions/upload-artifact@v4
-        with:
-          name: z40pro-boot-v${{ github.run_number }}
-          path: out/boot.img
-          if-no-files-found: error
+      - name: Upload to release (bypass artifact storage quota)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ github.run_number }}"             --title "build v${{ github.run_number }}"             --notes "kernel=$(cd linux && make kernelversion 2>/dev/null || echo mainline)"             --latest || true
+          gh release upload "v${{ github.run_number }}"             out/boot.img out-Image.gz out-z40pro.dtb --clobber
