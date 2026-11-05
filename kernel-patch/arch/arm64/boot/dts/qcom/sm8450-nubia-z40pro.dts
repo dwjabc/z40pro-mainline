@@ -11,10 +11,11 @@
 
 #include "sm8450.dtsi"
 #include "pm8350.dtsi"
+#include "pm8350b.dtsi"
 #include "pm8350c.dtsi"
 #include "pm8450.dtsi"
 #include <dt-bindings/input/linux-event-codes.h>
-#include <dt-bindings/regulator/qcom,rpmh-regulator-levels.h>
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 
 / {
 	model = "Nubia Z40 Pro (NX701J)";
