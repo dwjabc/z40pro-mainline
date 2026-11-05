@@ -377,14 +377,11 @@
 
 &ufs_mem_phy {
 	status = "okay";
-	vdda-phy-supply = <&pm8350c_l3>;/* TODO/
+	vdda-phy-supply = <&pm8350c_l3>;
 	vdda-pll-supply = <&pm8350c_l3>;
 };
 
-/* 遥控处理器: 第一版全部关闭, 心跳验证后逐个开 */
-&remoteproc_adsp {
-	status = "disabled";
-};
+/* TODO: remoteproc (modem/dsp) 状态待心跳验证后处理 */
 
 &remoteproc_cdsp {
 	status = "disabled";
