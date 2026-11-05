@@ -18,7 +18,7 @@ BB=$(find "$W/apk" -name 'busybox*' -type f | head -1)
 echo "[2/5] initramfs tree"
 R="$W/rootfs"
 for d in bin sbin dev proc sys tmp run etc; do mkdir -p "$R/$d"; done
-cp ../initramfs/init "$R/init"
+cp initramfs/init "$R/init"
 cp "$BB" "$R/bin/busybox"
 chmod +x "$R/init" "$R/bin/busybox"
 for app in sh mount umount ifconfig ip ls mkdir ln sleep cat echo grep head tail \
