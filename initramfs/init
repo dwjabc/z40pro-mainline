@@ -1,5 +1,6 @@
 #!/bin/sh
-# Z40 Pro mainline initramfs init — M4 心跳目标: USB NCM 网卡 + telnetd
+# Z40 Pro mainline initramfs init v2 — 防御版
+# 目标: 无论哪条路失败, 至少留下一个可交互通道 (ACM 串口 / NCM 网卡)
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 mount -t proc none /proc
@@ -7,49 +8,60 @@ mount -t sysfs none /sys
 mount -t devtmpfs none /dev
 mkdir -p /run /tmp /sys/kernel/config
 mount -t configfs none /sys/kernel/config
+mount -t pstore none /sys/fs/pstore 2>/dev/null
 
-echo "=== Z40 Pro mainline initramfs ==="
+echo "=== Z40 Pro mainline initramfs v2 ==="
 cat /proc/device-tree/model 2>/dev/null; echo
-echo "uptime: $(cat /proc/uptime)"
+echo "--- pstore (上次 panic 日志, 如有) ---"
+ls /sys/fs/pstore/ 2>/dev/null
+cat /sys/fs/pstore/console-ramoops-0 2>/dev/null | tail -40
+echo "--- dmesg tail ---"
+dmesg | tail -25
 
-# ---- USB gadget: NCM 网卡 + ACM 串口 ----
-if [ -d /sys/kernel/config/usb_gadget ]; then
-    G=/sys/kernel/config/usb_gadget/g1
-    mkdir -p $G
-    echo 0x18d1 > $G/idVendor     # Google VID (通用调试)
-    echo 0x4eee > $G/idProduct
-    echo "Z40Pro mainline" > $G/manufacturer
-    echo "040701" > $G/bcdDevice
-    mkdir -p $G/strings/0x409
-    echo "z40pro-mainline" > $G/strings/0x409/product
-    mkdir -p $G/functions/ncm.usb0
-    mkdir -p $G/functions/acm.usb1
-    mkdir -p $G/configs/c.1/strings/0x409
-    echo 500 > $G/configs/c.1/MaxPower
-    ln -s $G/functions/ncm.usb0 $G/configs/c.1/ncm.usb0
-    ln -s $G/functions/acm.usb1 $G/configs/c.1/acm.usb1
-    UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
-    if [ -n "$UDC" ]; then
-        echo "$UDC" > $G/UDC
-        echo "[usb] gadget bound to $UDC"
+# ---- USB gadget: 动态探测可用 function ----
+CF=/sys/kernel/config/usb_gadget
+if [ -d $CF ]; then
+    G=$CF/g1
+    mkdir -p $G 2>/dev/null
+    echo 0x18d1 > $G/idVendor 2>/dev/null
+    echo 0x4eee > $G/idProduct 2>/dev/null
+    echo "z40pro-mainline" > $G/manufacturer 2>/dev/null
+    mkdir -p $G/strings/0x409 2>/dev/null
+    echo "z40pro-mainline" > $G/strings/0x409/product 2>/dev/null
+    mkdir -p $G/configs/c.1 2>/dev/null
+    echo 500 > $G/configs/c.1/MaxPower 2>/dev/null
+
+    echo "--- 可用 USB functions ---"
+    ls $CF/.functions 2>/dev/null || ls /sys/kernel/config/usb_gadget/__str 2>/dev/null
+    FOUND=0
+    mkdir -p $G/functions/ncm.usb0 2>/dev/null && { ln -sf $G/functions/ncm.usb0 $G/configs/c.1/f1; echo "[gadget] ncm OK"; FOUND=1; }
+    if [ "$FOUND" = "0" ]; then
+        mkdir -p $G/functions/ecm.usb0 2>/dev/null && { ln -sf $G/functions/ecm.usb0 $G/configs/c.1/f1; echo "[gadget] ecm OK (fallback)"; FOUND=1; }
+    fi
+    if [ "$FOUND" = "0" ]; then
+        mkdir -p $G/functions/acm.usb1 2>/dev/null && { ln -sf $G/functions/acm.usb1 $G/configs/c.1/f1; echo "[gadget] 仅 acm (无网络)"; FOUND=1; }
+    fi
+    if [ "$FOUND" = "1" ]; then
+        UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
+        if [ -n "$UDC" ]; then
+            echo "$UDC" > $G/UDC 2>/dev/null && echo "[gadget] bound $UDC" || echo "[gadget] UDC bind FAILED"
+        else
+            echo "[gadget] 无 UDC (dwc3 未就绪)"
+        fi
     else
-        echo "[usb] NO UDC FOUND"
+        echo "[gadget] 内核无任何 USB function 支持! (config 缺失)"
     fi
 else
-    echo "[usb] configfs gadget unavailable"
+    echo "[gadget] configfs 不可用"
 fi
 
-# ---- 网络: gadget 静态 IP ----
+# ---- 网络 ----
 ifconfig usb0 192.168.237.2 netmask 255.255.255.0 up 2>/dev/null && \
-    echo "[net] usb0 = 192.168.237.2 (PC 侧配 192.168.237.1)"
+    echo "[net] usb0=192.168.237.2"
 
 # ---- 远程 shell ----
-telnetd -b 0.0.0.0:23 2>/dev/null && echo "[dbg] telnetd on :23" || echo "[dbg] telnetd failed"
-
-# ---- 挂载可读性扩展 ----
+telnetd -b 0.0.0.0:23 2>/dev/null && echo "[dbg] telnetd :23"
 mount -t debugfs none /sys/kernel/debug 2>/dev/null
 
-echo "=== init done, dropping to shell on console ==="
-
-# console shell
+echo "=== init done → console shell ==="
 exec setsid cttyhack /bin/sh

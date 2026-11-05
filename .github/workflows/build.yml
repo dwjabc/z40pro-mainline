@@ -62,6 +62,14 @@ jobs:
           scripts/kconfig/merge_config.sh -m arch/arm64/configs/defconfig \
             ../kernel-patch/z40pro.config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          echo "=== USB gadget config check ==="
+          for c in USB_GADGET USB_CONFIGFS USB_CONFIGFS_NCM USB_F_NCM USB_CONFIGFS_ACM USB_F_ACM USB_LIBCOMPOSITE CONFIGFS_FS; do
+            v=$(grep "^CONFIG_${c}=" .config | head -1)
+            echo "  ${c}: ${v:-MISSING}"
+            [ -z "$v" ] && echo "FATAL: ${c} not set" >> config_fail
+          done
+          if [ -f config_fail ]; then cat config_fail; exit 1; fi
+          echo "  all gadget configs OK"
 
       - name: Build
         run: |
