@@ -66,16 +66,16 @@ jobs:
       - name: Build
         run: |
           cd linux
-          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image.gz dtbs
-          cp arch/arm64/boot/Image.gz ../out-Image.gz
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs
+          cp arch/arm64/boot/Image ../out-Image
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
 
       - name: Assemble boot.img
-        run: bash scripts/build-initramfs.sh out-z40pro.dtb out-Image.gz out
+        run: bash scripts/build-initramfs.sh out-z40pro.dtb out-Image out
 
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v${{ github.run_number }}"             --title "build v${{ github.run_number }}"             --notes "kernel=$(cd linux && make kernelversion 2>/dev/null || echo mainline)"             --latest || true
-          gh release upload "v${{ github.run_number }}"             out/boot.img out-Image.gz out-z40pro.dtb --clobber
+          gh release upload "v${{ github.run_number }}"             out/boot.img out-Image out-z40pro.dtb --clobber
