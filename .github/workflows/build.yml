@@ -26,6 +26,7 @@ jobs:
       - name: Compile dtb only
         run: |
           cd linux
+          make ARCH=arm64 defconfig
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             qcom/sm8450-nubia-z40pro.dtb
 
