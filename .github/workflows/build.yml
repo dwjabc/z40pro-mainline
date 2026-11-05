@@ -6,7 +6,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    # 快速 dtb 语法/引用校验 (~3 分钟), 失败则不进全量构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu bc bison flex libssl-dev libelf-dev
+      - name: Clone mainline (shallow)
+        run: git clone --depth 1 https://github.com/torvalds/linux.git linux
+      - name: Apply z40pro board
+        run: |
+          cp kernel-patch/arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dts \
+             linux/arch/arm64/boot/dts/qcom/
+          python3 scripts/patch_makefile.py linux/arch/arm64/boot/dts/qcom/Makefile
+      - name: Compile dtb only
+        run: |
+          cd linux
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            qcom/sm8450-nubia-z40pro.dtb
+
   build:
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
