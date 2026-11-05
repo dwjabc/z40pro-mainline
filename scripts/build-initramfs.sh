@@ -29,16 +29,20 @@ done
 echo "[3/5] cpio"
 (cd "$R" && find . | cpio -o -H newc --owner 0:0) | gzip -9 > "$W/initramfs.img"
 
-echo "[4/5] mkbootimg"
-curl -s -o "$W/mkbootimg.b64" "https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/main/mkbootimg.py?format=TEXT"
-python3 -c "import base64; open('$W/mkbootimg.py','wb').write(base64.b64decode(open('$W/mkbootimg.b64','rb').read()))"
+echo "[4/5] mkbootimg (v2 + dtb: ABL loads our DT, bypasses MyOS vendor_boot)"
+python3 -m pip install --quiet mkbootimg 2>/dev/null || pip3 install --quiet mkbootimg
 
-python3 "$W/mkbootimg.py" \
-  --header_version 4 \
+mkbootimg \
+  --header_version 2 \
   --kernel "$KERNEL" \
   --ramdisk "$W/initramfs.img" \
   --dtb "$DTB" \
   --cmdline "console=ttyMSM0,115200n8 earlycon=qcom_geni,0xa90000 panic=10 rootwait" \
+  --base 0x00000000 \
+  --kernel_offset 0x00008000 \
+  --ramdisk_offset 0x01000000 \
+  --second_offset 0x00f00000 \
+  --tags_offset 0x00000100 \
   --pagesize 4096 \
   --output "$OUT/boot.img"
 
