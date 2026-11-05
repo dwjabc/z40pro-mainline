@@ -348,9 +348,6 @@
 /* USB — 心跳生命线 (M4: initramfs gadget NCM + ssh) */
 &usb_1 {
 	status = "okay";
-};
-
-&usb_1_dwc3 {
 	dr_mode = "peripheral";   /* 手机口: PC 直连 */
 };
 
@@ -397,6 +394,3 @@
 	status = "disabled";
 };
 
-&remoteproc_wpss {
-	status = "disabled";
-};
