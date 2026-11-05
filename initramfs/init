@@ -1,0 +1,55 @@
+#!/bin/sh
+# Z40 Pro mainline initramfs init — M4 心跳目标: USB NCM 网卡 + telnetd
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t devtmpfs none /dev
+mkdir -p /run /tmp /sys/kernel/config
+mount -t configfs none /sys/kernel/config
+
+echo "=== Z40 Pro mainline initramfs ==="
+cat /proc/device-tree/model 2>/dev/null; echo
+echo "uptime: $(cat /proc/uptime)"
+
+# ---- USB gadget: NCM 网卡 + ACM 串口 ----
+if [ -d /sys/kernel/config/usb_gadget ]; then
+    G=/sys/kernel/config/usb_gadget/g1
+    mkdir -p $G
+    echo 0x18d1 > $G/idVendor     # Google VID (通用调试)
+    echo 0x4eee > $G/idProduct
+    echo "Z40Pro mainline" > $G/manufacturer
+    echo "040701" > $G/bcdDevice
+    mkdir -p $G/strings/0x409
+    echo "z40pro-mainline" > $G/strings/0x409/product
+    mkdir -p $G/functions/ncm.usb0
+    mkdir -p $G/functions/acm.usb1
+    mkdir -p $G/configs/c.1/strings/0x409
+    echo 500 > $G/configs/c.1/MaxPower
+    ln -s $G/functions/ncm.usb0 $G/configs/c.1/ncm.usb0
+    ln -s $G/functions/acm.usb1 $G/configs/c.1/acm.usb1
+    UDC=$(ls /sys/class/udc 2>/dev/null | head -1)
+    if [ -n "$UDC" ]; then
+        echo "$UDC" > $G/UDC
+        echo "[usb] gadget bound to $UDC"
+    else
+        echo "[usb] NO UDC FOUND"
+    fi
+else
+    echo "[usb] configfs gadget unavailable"
+fi
+
+# ---- 网络: gadget 静态 IP ----
+ifconfig usb0 192.168.237.2 netmask 255.255.255.0 up 2>/dev/null && \
+    echo "[net] usb0 = 192.168.237.2 (PC 侧配 192.168.237.1)"
+
+# ---- 远程 shell ----
+telnetd -b 0.0.0.0:23 2>/dev/null && echo "[dbg] telnetd on :23" || echo "[dbg] telnetd failed"
+
+# ---- 挂载可读性扩展 ----
+mount -t debugfs none /sys/kernel/debug 2>/dev/null
+
+echo "=== init done, dropping to shell on console ==="
+
+# console shell
+exec setsid cttyhack /bin/sh
