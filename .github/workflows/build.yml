@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   lint:
-    # 快速 dtb 语法/引用校验 (~3 分钟), 失败则不进全量构建
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -22,15 +21,12 @@ jobs:
       - name: Clone mainline (shallow)
         run: git clone --depth 1 https://github.com/torvalds/linux.git linux
       - name: Apply z40pro board
-        run: |
-          cp kernel-patch/arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dts \
-             linux/arch/arm64/boot/dts/qcom/
-          python3 scripts/patch_makefile.py linux/arch/arm64/boot/dts/qcom/Makefile
+        run: python3 scripts/apply_board.py linux
       - name: Compile dtb only
         run: |
           cd linux
           make ARCH=arm64 defconfig
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS='-@' \
             qcom/sm8450-nubia-z40pro.dtb
 
   build:
@@ -46,14 +42,17 @@ jobs:
           sudo apt-get install -y -qq gcc-aarch64-linux-gnu bc bison flex \
             libssl-dev libelf-dev cpio gzip python3
 
+      - name: Build initramfs cpio (for kernel embed)
+        run: bash scripts/build_cpio.sh out
+
+      - name: Place initramfs for INITRAMFS_SOURCE
+        run: cp buildwork/initramfs.img initramfs-builtin.cpio.gz
+
       - name: Clone mainline (shallow)
         run: git clone --depth 1 https://github.com/torvalds/linux.git linux
 
       - name: Apply z40pro board
-        run: |
-          cp kernel-patch/arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dts \
-             linux/arch/arm64/boot/dts/qcom/
-          python3 scripts/patch_makefile.py linux/arch/arm64/boot/dts/qcom/Makefile
+        run: python3 scripts/apply_board.py linux
 
       - name: Configure
         run: |
@@ -62,28 +61,46 @@ jobs:
           scripts/kconfig/merge_config.sh -m arch/arm64/configs/defconfig \
             ../kernel-patch/z40pro.config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-          echo "=== USB gadget config check ==="
-          for c in USB_GADGET USB_CONFIGFS USB_CONFIGFS_NCM USB_F_NCM USB_CONFIGFS_ACM USB_F_ACM USB_LIBCOMPOSITE CONFIGFS_FS; do
-            v=$(grep "^CONFIG_${c}=" .config | head -1)
+          echo "=== critical config check ==="
+          FAIL=0
+          for c in Z40PRO_FORCE_BUILTIN_DTB USB_GADGET USB_CONFIGFS USB_CONFIGFS_NCM \
+                   USB_CONFIGFS_ACM USB_F_ACM CONFIGFS_FS PSTORE_RAM; do
+            v=$(grep "^CONFIG_${c}=y$" .config | head -1)
             echo "  ${c}: ${v:-MISSING}"
-            [ -z "$v" ] && echo "FATAL: ${c} not set" >> config_fail
+            [ -z "$v" ] && FAIL=1
           done
-          if [ -f config_fail ]; then cat config_fail; exit 1; fi
-          echo "  all gadget configs OK"
+          grep -q '^CONFIG_INITRAMFS_SOURCE="\.\./initramfs-builtin.cpio.gz"$' .config \
+            || { echo "  INITRAMFS_SOURCE: WRONG"; FAIL=1; }
+          grep -q '^# CONFIG_CPU_IDLE is not set$' .config \
+            || { echo "  CPU_IDLE must be disabled (cupid: blacks out panel)"; FAIL=1; }
+          [ "$FAIL" = "1" ] && exit 1
+          echo "  all critical configs OK"
 
       - name: Build
         run: |
           cd linux
-          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS='-@' dtbs
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image
           cp arch/arm64/boot/Image ../out-Image
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
 
-      - name: Assemble boot.img
-        run: bash scripts/build-initramfs.sh out-z40pro.dtb out-Image out
+      - name: Pack boot.img (v2, no ramdisk, decoy dtb)
+        run: |
+          python3 scripts/mkbootimg_v2.py \
+            --kernel out-Image \
+            --dtb reference/decoy-cape.dtb \
+            --cmdline "console=ttyMSM0,115200n8" \
+            --base 0 --kernel_offset 0x8000 --ramdisk_offset 0x1000000 \
+            --tags_offset 0x100 --pagesize 4096 \
+            --output out/boot.img
 
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${{ github.run_number }}"             --title "build v${{ github.run_number }}"             --notes "kernel=$(cd linux && make kernelversion 2>/dev/null || echo mainline)"             --latest || true
-          gh release upload "v${{ github.run_number }}"             out/boot.img out-Image out-z40pro.dtb --clobber
+          gh release create "v$(date +%m%d%H%M)" \
+            --title "build $(date +%m%d-%H%M)" \
+            --notes "mainline + builtin DTB + embedded initramfs (cupid scheme)" \
+            --latest || true
+          gh release upload "v$(date +%m%d%H%M)" \
+            out/boot.img out-Image out-z40pro.dtb --clobber

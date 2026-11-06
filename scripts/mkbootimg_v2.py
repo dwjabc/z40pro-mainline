@@ -7,7 +7,8 @@ def main():
     ap = sys.argv[1:]
     def opt(name):
         return ap[ap.index(name) + 1]
-    kernel_f, ramdisk_f, dtb_f = opt('--kernel'), opt('--ramdisk'), opt('--dtb')
+    kernel_f, dtb_f = opt('--kernel'), opt('--dtb')
+    ramdisk_f = opt('--ramdisk') if '--ramdisk' in ap else None
     cmdline = opt('--cmdline')
     page_size = int(opt('--pagesize'), 0)
     base = int(opt('--base'), 0)
@@ -17,7 +18,7 @@ def main():
     out = opt('--output')
 
     kernel = open(kernel_f, 'rb').read()
-    ramdisk = open(ramdisk_f, 'rb').read()
+    ramdisk = open(ramdisk_f, 'rb').read() if ramdisk_f else b''
     dtb = open(dtb_f, 'rb').read()
 
     HEADER_SIZE = 1656
@@ -58,7 +59,10 @@ def main():
     sha = hashlib.sha1(kernel + ramdisk).digest()[:16]
     hdr = hdr[:576] + sha.ljust(32, b'\x00') + hdr[608:]
 
-    blob = padded(hdr) + padded(kernel) + padded(ramdisk) + padded(dtb)
+    blob = padded(hdr) + padded(kernel)
+    if ramdisk:
+        blob += padded(ramdisk)
+    blob += padded(dtb)
     open(out, 'wb').write(blob)
     print(f'boot.img: kernel={len(kernel)} ramdisk={len(ramdisk)} dtb={len(dtb)} total={len(blob)}')
 
