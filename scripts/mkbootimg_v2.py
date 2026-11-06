@@ -20,13 +20,15 @@ def main():
     ramdisk = open(ramdisk_f, 'rb').read()
     dtb = open(dtb_f, 'rb').read()
 
-    HEADER_SIZE = 1660
+    HEADER_SIZE = 1656
     magic = b'ANDROID!'
     name = b''
     main_cmd = cmdline.encode()[:512]
     extra_cmd = b''
     hdr = struct.pack(
-        '<8s10I16s512s32s1024sI4xqIII',  # q 前 4x 对齐; 末尾 III = header_size, dt_size, dt_addr
+        '<8s10I16s512s32s1024sIqIII',    # AOSP v2: recovery_dtbo_offset(q) 紧跟 size(I) 无 pad
+                                          # 偏移: size@1632 offset@1636 header_size@1644
+                                          #       dt_size@1648 dt_addr@1652 -> 结构总长 1656
         magic,
         len(kernel), base + k_off,
         len(ramdisk), base + r_off,
