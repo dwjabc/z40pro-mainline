@@ -21,6 +21,10 @@
 	model = "Nubia Z40 Pro (NX701J)";
 	compatible = "nubia,z40pro", "qcom,sm8450";
 
+	/* ZTE ABL 板级匹配必需 (从 MyOS cape DT 提取) */
+	qcom,msm-id = <0x21c 0x10000>;
+	qcom,board-id = <0x0 0x0>;
+
 	aliases {
 		serial0 = &uart7;   /* TODO: 确认 Z40 Pro debug uart 实际编号 */
 	};
