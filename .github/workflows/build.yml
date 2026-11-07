@@ -86,11 +86,17 @@ jobs:
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
           # ESP 打包需要 Image 与 dtb, 不再产传统 boot.img
 
-      - name: Build bootable ESP (grub -> logdump partition)
+      - name: Build bootable ESP (grub on logdump partition)
         run: |
-          sudo apt-get install -y -qq mtools dosfstools grub-efi-arm64-bin >/dev/null
+          sudo apt-get install -y -qq mtools dosfstools >/dev/null
           mkdir -p out
           bash scripts/build_esp.sh out/esp.img out-Image out-z40pro.dtb buildwork/initramfs.img
+      - name: Upload to release (bypass artifact storage quota)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$(date +%m%d%H%M)"             --title "build $(date +%m%d-%H%M)"             --notes "mainline + builtin DTB + grub ESP (logdump)"             --latest || true
+          gh release upload "v$(date +%m%d%H%M)"             out/boot.img out/esp.img out-Image out-z40pro.dtb --clobber
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
