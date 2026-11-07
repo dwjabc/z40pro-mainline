@@ -61,6 +61,10 @@ jobs:
           scripts/kconfig/merge_config.sh -m arch/arm64/configs/defconfig \
             ../kernel-patch/z40pro.config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          # CPU_IDLE 会被 olddefconfig 顶回 y, 用 scripts/config 强制禁用后再落定
+          scripts/config --file .config --disable CPU_IDLE
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          grep -q '^# CONFIG_CPU_IDLE is not set$' .config || { echo "CPU_IDLE disable FAILED"; exit 1; }
           echo "=== critical config check ==="
           FAIL=0
           for c in Z40PRO_FORCE_BUILTIN_DTB USB_GADGET USB_CONFIGFS USB_CONFIGFS_NCM \
