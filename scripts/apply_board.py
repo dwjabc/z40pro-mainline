@@ -87,7 +87,7 @@ if 'z40pro_dtb.o' not in ktxt:
         '\nobj-$(CONFIG_Z40PRO_FORCE_BUILTIN_DTB) += z40pro_dtb.o\n'
         'obj-$(CONFIG_Z40PRO_EARLY_FB) += z40pro_early.o\n'
         'Z40PRO_DTB ?= sm8450-nubia-z40pro\n'
-        'AFLAGS_z40pro_dtb.o += -DZ40PRO_DTB_FILE="arch/arm64/boot/dts/qcom/$(Z40PRO_DTB).dtb"\n'
+        'AFLAGS_z40pro_dtb.o += -DZ40PRO_DTB_FILE=\'"arch/arm64/boot/dts/qcom/$(Z40PRO_DTB).dtb"\'\n'
         '$(obj)/z40pro_dtb.o: arch/arm64/boot/dts/qcom/$(Z40PRO_DTB).dtb\n')
     open(km, 'w').write(ktxt)
 print('[4] kernel Makefile OK')
