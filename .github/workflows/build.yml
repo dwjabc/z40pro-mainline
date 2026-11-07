@@ -96,7 +96,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v$(date +%m%d%H%M)"             --title "build $(date +%m%d-%H%M)"             --notes "mainline + builtin DTB + grub ESP (logdump)"             --latest || true
-          gh release upload "v$(date +%m%d%H%M)"             out/boot.img out/esp.img out-Image out-z40pro.dtb --clobber
+          gh release upload "v$(date +%m%d%H%M)"             out/esp.img out-Image out-z40pro.dtb --clobber
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
