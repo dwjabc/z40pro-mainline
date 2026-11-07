@@ -1,0 +1,122 @@
+    reserved-memory {
+        #address-cells = < 0x00000002 >;
+        #size-cells = < 0x00000002 >;
+        ranges = <>;
+        phandle = < 0x00000258 >;
+        hyp_region@80000000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80000000 0x00000000 0x00600000 >;
+            phandle = < 0x00000259 >;
+        xbl_dtlog_region@80600000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80600000 0x00000000 0x00040000 >;
+            phandle = < 0x0000025a >;
+        xbl_ramdump_region@80640000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80640000 0x00000000 0x001c0000 >;
+            phandle = < 0x0000025b >;
+        aop_image_region@80800000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80800000 0x00000000 0x00060000 >;
+            phandle = < 0x0000025c >;
+        aop_cmd_db_region@80860000 {
+            compatible = "qcom,cmd-db";
+            no-map = <>;
+            reg = < 0x00000000 0x80860000 0x00000000 0x00020000 >;
+            phandle = < 0x0000025d >;
+        aop_config_region@80880000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80880000 0x00000000 0x00020000 >;
+            phandle = < 0x0000025e >;
+        tme_crash_dump_region@808a0000 {
+            no-map = <>;
+            reg = < 0x00000000 0x808a0000 0x00000000 0x00040000 >;
+            phandle = < 0x0000025f >;
+        tme_log_region@808e0000 {
+            no-map = <>;
+            reg = < 0x00000000 0x808e0000 0x00000000 0x00004000 >;
+            phandle = < 0x00000260 >;
+        uefi_log_region@808e4000 {
+            no-map = <>;
+            reg = < 0x00000000 0x808e4000 0x00000000 0x00010000 >;
+            phandle = < 0x00000261 >;
+        smem_region@80900000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80900000 0x00000000 0x00200000 >;
+            phandle = < 0x000000ac >;
+        cpucp_fw_region@80b00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80b00000 0x00000000 0x00100000 >;
+            phandle = < 0x00000262 >;
+        cdsp_secure_heap_region@80c00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x80c00000 0x00000000 0x04600000 >;
+            phandle = < 0x0000022b >;
+        video_region@85700000 {
+            no-map = <>;
+            reg = < 0x00000000 0x85700000 0x00000000 0x00700000 >;
+            phandle = < 0x00000263 >;
+        adsp_region@85e00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x85e00000 0x00000000 0x02800000 >;
+            phandle = < 0x00000095 >;
+        cdsp_region@89900000 {
+            no-map = <>;
+            reg = < 0x00000000 0x89900000 0x00000000 0x02000000 >;
+            phandle = < 0x00000098 >;
+        ipa_fw_region@8b900000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8b900000 0x00000000 0x00010000 >;
+            phandle = < 0x00000264 >;
+        ipa_gsi_region@8b910000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8b910000 0x00000000 0x0000a000 >;
+            phandle = < 0x000000b5 >;
+        gpu_microcode_region@8b91a000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8b91a000 0x00000000 0x00002000 >;
+            phandle = < 0x00000233 >;
+        spss_region_region@8ba00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8ba00000 0x00000000 0x00180000 >;
+            phandle = < 0x000000a1 >;
+        spu_tz_shared_mem@8bb80000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8bb80000 0x00000000 0x00060000 >;
+            phandle = < 0x0000022f >;
+        spu_modem_shared_mem@8bbe0000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8bbe0000 0x00000000 0x00020000 >;
+            phandle = < 0x0000022e >;
+        mpss_region@8bc00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x8bc00000 0x00000000 0x13200000 >;
+            phandle = < 0x0000009e >;
+        cvp_region@9ee00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x9ee00000 0x00000000 0x00700000 >;
+            phandle = < 0x00000255 >;
+        camera_region@9f500000 {
+            no-map = <>;
+            reg = < 0x00000000 0x9f500000 0x00000000 0x00800000 >;
+            phandle = < 0x00000265 >;
+        slpi_region@9fd00000 {
+            no-map = <>;
+            reg = < 0x00000000 0x9fd00000 0x00000000 0x01700000 >;
+            phandle = < 0x000000b1 >;
+        xbl_sc_region@a6e00000 {
+            no-map = <>;
+            reg = < 0x00000000 0xa6e00000 0x00000000 0x00040000 >;
+            phandle = < 0x00000266 >;
+        global_sync_region@a6f00000 {
+            no-map = <>;
+            reg = < 0x00000000 0xa6f00000 0x00000000 0x00100000 >;
+            phandle = < 0x00000267 >;
+        ramoops@c0000000 {
+            no-map = <>;
+            reg = < 0x00000000 0xc0000000 0x00000000 0x00200000 >;
+            phandle = < 0x0000009c >;
+        qheebsp_reserved_region@e0000000 {
+            no-map = <>;
+            reg = < 0x00000000 0xe0000000 0x00000000 0x00600000 >;
+            phandle = < 0x00000268 >;

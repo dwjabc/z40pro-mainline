@@ -25,6 +25,220 @@
 	qcom,msm-id = <0x21c 0x10000>;
 	qcom,board-id = <0x0 0x0>;
 
+	memory@80000000 {
+		device_type = "memory";
+		/* Z40 Pro 12GB: 3GB @0x80000000 + 8GB @0x100000000 */
+		reg = <0 0x80000000 0 0xc0000000>,
+		      <0 0x100000000 0 0x200000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		hyp_region: region@80000000 {
+			no-map;
+			reg = <0x0 0x80000000 0x0 0x600000>;
+		};
+
+		xbl_dtlog_region: region@80600000 {
+			no-map;
+			reg = <0x0 0x80600000 0x0 0x40000>;
+		};
+
+		xbl_ramdump_region: region@80640000 {
+			no-map;
+			reg = <0x0 0x80640000 0x0 0x1c0000>;
+		};
+
+		aop_image_region: region@80800000 {
+			no-map;
+			reg = <0x0 0x80800000 0x0 0x60000>;
+		};
+
+		aop_cmd_db_region: region@80860000 {
+			no-map;
+			reg = <0x0 0x80860000 0x0 0x20000>;
+		};
+
+		aop_config_region: region@80880000 {
+			no-map;
+			reg = <0x0 0x80880000 0x0 0x20000>;
+		};
+
+		tme_crash_dump_region: region@808a0000 {
+			no-map;
+			reg = <0x0 0x808a0000 0x0 0x40000>;
+		};
+
+		tme_log_region: region@808e0000 {
+			no-map;
+			reg = <0x0 0x808e0000 0x0 0x4000>;
+		};
+
+		uefi_log_region: region@808e4000 {
+			no-map;
+			reg = <0x0 0x808e4000 0x0 0x10000>;
+		};
+
+		smem_region: region@80900000 {
+			no-map;
+			reg = <0x0 0x80900000 0x0 0x200000>;
+		};
+
+		cpucp_fw_region: region@80b00000 {
+			no-map;
+			reg = <0x0 0x80b00000 0x0 0x100000>;
+		};
+
+		cdsp_secure_heap_region: region@80c00000 {
+			no-map;
+			reg = <0x0 0x80c00000 0x0 0x4600000>;
+		};
+
+		video_region: region@85700000 {
+			no-map;
+			reg = <0x0 0x85700000 0x0 0x700000>;
+		};
+
+		adsp_region: region@85e00000 {
+			no-map;
+			reg = <0x0 0x85e00000 0x0 0x2800000>;
+		};
+
+		cdsp_region: region@89900000 {
+			no-map;
+			reg = <0x0 0x89900000 0x0 0x2000000>;
+		};
+
+		ipa_fw_region: region@8b900000 {
+			no-map;
+			reg = <0x0 0x8b900000 0x0 0x10000>;
+		};
+
+		ipa_gsi_region: region@8b910000 {
+			no-map;
+			reg = <0x0 0x8b910000 0x0 0xa000>;
+		};
+
+		gpu_microcode_region: region@8b91a000 {
+			no-map;
+			reg = <0x0 0x8b91a000 0x0 0x2000>;
+		};
+
+		spss_region_region: region@8ba00000 {
+			no-map;
+			reg = <0x0 0x8ba00000 0x0 0x180000>;
+		};
+
+		spu_tz_shared_mem: region@8bb80000 {
+			no-map;
+			reg = <0x0 0x8bb80000 0x0 0x60000>;
+		};
+
+		spu_modem_shared_mem: region@8bbe0000 {
+			no-map;
+			reg = <0x0 0x8bbe0000 0x0 0x20000>;
+		};
+
+		mpss_region: region@8bc00000 {
+			no-map;
+			reg = <0x0 0x8bc00000 0x0 0x13200000>;
+		};
+
+		cvp_region: region@9ee00000 {
+			no-map;
+			reg = <0x0 0x9ee00000 0x0 0x700000>;
+		};
+
+		camera_region: region@9f500000 {
+			no-map;
+			reg = <0x0 0x9f500000 0x0 0x800000>;
+		};
+
+		slpi_region: region@9fd00000 {
+			no-map;
+			reg = <0x0 0x9fd00000 0x0 0x1700000>;
+		};
+
+		xbl_sc_region: region@a6e00000 {
+			no-map;
+			reg = <0x0 0xa6e00000 0x0 0x40000>;
+		};
+
+		global_sync_region: region@a6f00000 {
+			no-map;
+			reg = <0x0 0xa6f00000 0x0 0x100000>;
+		};
+
+		ramoops: region@c0000000 {
+			no-map;
+			reg = <0x0 0xc0000000 0x0 0x200000>;
+		};
+
+		qheebsp_reserved_region: region@e0000000 {
+			no-map;
+			reg = <0x0 0xe0000000 0x0 0x600000>;
+		};
+
+		cpusys_vm_region: region@e0600000 {
+			no-map;
+			reg = <0x0 0xe0600000 0x0 0x400000>;
+		};
+
+		hyp_reserved_region: region@e0a00000 {
+			no-map;
+			reg = <0x0 0xe0a00000 0x0 0x100000>;
+		};
+
+		trust_ui_vm_region: region@e0b00000 {
+			no-map;
+			reg = <0x0 0xe0b00000 0x0 0x4af3000>;
+		};
+
+		trust_ui_vm_qrtr: region@e55f3000 {
+			no-map;
+			reg = <0x0 0xe55f3000 0x0 0x9000>;
+		};
+
+		trust_ui_vm_vblk0_ring: region@e55fc000 {
+			no-map;
+			reg = <0x0 0xe55fc000 0x0 0x4000>;
+		};
+
+		trust_ui_vm_swiotlb: region@e5600000 {
+			no-map;
+			reg = <0x0 0xe5600000 0x0 0x100000>;
+		};
+
+		tz_stat_region: region@e8800000 {
+			no-map;
+			reg = <0x0 0xe8800000 0x0 0x100000>;
+		};
+
+		tags_region: region@e8900000 {
+			no-map;
+			reg = <0x0 0xe8900000 0x0 0x1200000>;
+		};
+
+		qtee_region: region@e9b00000 {
+			no-map;
+			reg = <0x0 0xe9b00000 0x0 0x500000>;
+		};
+
+		trusted_apps_region: region@ea000000 {
+			no-map;
+			reg = <0x0 0xea000000 0x0 0x3900000>;
+		};
+
+		trusted_apps_ext_region: region@ed900000 {
+			no-map;
+			reg = <0x0 0xed900000 0x0 0x3b00000>;
+		};
+
+	};
+
 	aliases {
 		serial0 = &uart7;   /* TODO: 确认 Z40 Pro debug uart 实际编号 */
 	};
