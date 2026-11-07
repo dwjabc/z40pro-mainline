@@ -43,6 +43,14 @@ if 'Z40PRO_FORCE_BUILTIN_DTB' not in ktxt:
 	  setup_arch() replaces the ABL-provided __fdt_pointer with the
 	  mainline DTB embedded via arch/arm64/kernel/z40pro_dtb.S.
 
+config Z40PRO_EARLY_FB
+	bool "z40pro: early framebuffer console (draw log on ABL splash)"
+	default n
+	help
+	  Draw kernel messages onto the framebuffer left scanning by the
+	  bootloader, from early_initcall. Enable with cmdline
+	  z40pro.fb=0x<phys>,<stride_px>,<height>,<width>,<bpp>.
+
 '''
     anchor = 'config ARM64_WORKAROUND_CLEAN_CACHE\n'
     assert anchor in ktxt, 'Kconfig anchor missing'
@@ -67,11 +75,18 @@ z40pro_dtb_end:
 open(os.path.join(kern, 'z40pro_dtb.S'), 'w').write(src)
 print('[3] z40pro_dtb.S OK')
 
+# --- 3b. EARLY_FB 文件 (屏幕接管, 默认静默) ---
+nf = os.path.join(repo, 'kernel-patch', 'new-files', 'arch', 'arm64', 'kernel')
+for fn in ('z40pro_early.c', 'z40pro_font.h'):
+    shutil.copy(os.path.join(nf, fn), os.path.join(kern, fn))
+print('[3b] EARLY_FB files OK')
+
 # --- 4. kernel Makefile: obj + incbin path ---
 km = os.path.join(kern, 'Makefile')
 ktxt = open(km).read()
 if 'z40pro_dtb.o' not in ktxt:
-    ktxt += ('\nobj-$(CONFIG_Z40PRO_FORCE_BUILTIN_DTB) += z40pro_dtb.o\n'
+    ktxt += ('\nobj-$(CONFIG_Z40PRO_FORCE_BUILTIN_DTB) += z40pro_dtb.o
+obj-$(CONFIG_Z40PRO_EARLY_FB) += z40pro_early.o\n'
              'Z40PRO_DTB ?= sm8450-nubia-z40pro\n'
              'AFLAGS_z40pro_dtb.o += -DZ40PRO_DTB_FILE=\'"arch/arm64/boot/dts/qcom/$(Z40PRO_DTB).dtb"\'\n'
              '$(obj)/z40pro_dtb.o: arch/arm64/boot/dts/qcom/$(Z40PRO_DTB).dtb\n')
