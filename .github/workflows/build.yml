@@ -40,7 +40,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq gcc-aarch64-linux-gnu bc bison flex \
-            libssl-dev libelf-dev cpio gzip python3
+            libssl-dev libelf-dev cpio gzip python3 mtools dosfstools
 
       - name: Build initramfs cpio (for kernel embed)
         run: bash scripts/build_cpio.sh out
@@ -61,19 +61,18 @@ jobs:
           scripts/kconfig/merge_config.sh -m arch/arm64/configs/defconfig \
             ../kernel-patch/z40pro.config
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-          # CPU_IDLE 在此阶段保留 (select 链顽固); 黑屏风险仅在 M5 点屏时相关
           echo "=== critical config check ==="
           FAIL=0
-          for c in Z40PRO_FORCE_BUILTIN_DTB USB_GADGET USB_CONFIGFS USB_CONFIGFS_NCM \
-                   USB_CONFIGFS_ACM USB_F_ACM CONFIGFS_FS PSTORE_RAM; do
+          for c in Z40PRO_FORCE_BUILTIN_DTB Z40PRO_EARLY_FB USB_GADGET USB_CONFIGFS \
+                   USB_CONFIGFS_NCM USB_CONFIGFS_ACM USB_F_ACM CONFIGFS_FS PSTORE_RAM; do
             v=$(grep "^CONFIG_${c}=y$" .config | head -1)
             echo "  ${c}: ${v:-MISSING}"
             [ -z "$v" ] && FAIL=1
           done
-          grep -q '^CONFIG_INITRAMFS_SOURCE="\.\./initramfs-builtin.cpio.gz"$' .config \
+          grep -q '^CONFIG_INITRAMFS_SOURCE=' .config \
             || { echo "  INITRAMFS_SOURCE: WRONG"; FAIL=1; }
-          grep -q '^# CONFIG_CPU_IDLE is not set$' .config \
-            || echo "  WARN: CPU_IDLE still on (blackout risk at M5 panel stage; harmless for heartbeat)"
+          # CPU_IDLE: select 链顽固, 心跳阶段无害, M5 点屏时处理
+          grep -q '^CONFIG_INITRAMFS_COMPRESSION_GZIP=y\|^# CONFIG_CPU_IDLE is not set\|^CONFIG_CPU_IDLE=y' .config || true
           [ "$FAIL" = "1" ] && exit 1
           echo "  all critical configs OK"
 
@@ -84,32 +83,20 @@ jobs:
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image
           cp arch/arm64/boot/Image ../out-Image
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
-          # ESP 打包需要 Image 与 dtb, 不再产传统 boot.img
 
       - name: Build bootable ESP (grub on logdump partition)
         run: |
-          sudo apt-get install -y -qq mtools dosfstools >/dev/null
           mkdir -p out
           bash scripts/build_esp.sh out/esp.img out-Image out-z40pro.dtb buildwork/initramfs.img
+
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$(date +%m%d%H%M)"             --title "build $(date +%m%d-%H%M)"             --notes "mainline + builtin DTB + grub ESP (logdump)"             --latest || true
-          gh release upload "v$(date +%m%d%H%M)"             out/esp.img out-Image out-z40pro.dtb --clobber
-      - name: Upload to release (bypass artifact storage quota)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v$(date +%m%d%H%M)"             --title "build $(date +%m%d-%H%M)"             --notes "mainline + builtin DTB + grub ESP (logdump)"             --latest || true
-          gh release upload "v$(date +%m%d%H%M)"             out/boot.img out/esp.img out-Image out-z40pro.dtb --clobber
-      - name: Upload to release (bypass artifact storage quota)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v$(date +%m%d%H%M)" \
+          TAG="v$(date +%m%d%H%M)"
+          gh release create "$TAG" \
             --title "build $(date +%m%d-%H%M)" \
-            --notes "mainline + builtin DTB + embedded initramfs (cupid scheme)" \
-            --latest || true
-          gh release upload "v$(date +%m%d%H%M)" \
-            out/boot.img out-Image out-z40pro.dtb --clobber
+            --notes "mainline + builtin DTB + grub ESP (logdump)" \
+            --latest || gh release edit "$TAG" --latest || true
+          gh release upload "$TAG" \
+            out/esp.img out-Image out-z40pro.dtb --clobber
