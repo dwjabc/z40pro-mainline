@@ -84,17 +84,19 @@ jobs:
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image
           cp arch/arm64/boot/Image ../out-Image
           cp arch/arm64/boot/dts/qcom/sm8450-nubia-z40pro.dtb ../out-z40pro.dtb
+          # ESP 打包需要 Image 与 dtb, 不再产传统 boot.img
 
-      - name: Pack boot.img (v2, no ramdisk, decoy dtb)
+      - name: Build bootable ESP (grub -> logdump partition)
         run: |
-          python3 scripts/mkbootimg_v2.py \
-            --kernel out-Image \
-            --dtb reference/decoy-cape.dtb \
-            --cmdline "console=ttyMSM0,115200n8" \
-            --base 0 --kernel_offset 0x8000 --ramdisk_offset 0x1000000 \
-            --tags_offset 0x100 --pagesize 4096 \
-            --output out/boot.img
-
+          sudo apt-get install -y -qq mtools dosfstools grub-efi-arm64-bin >/dev/null
+          mkdir -p out
+          bash scripts/build_esp.sh out/esp.img out-Image out-z40pro.dtb buildwork/initramfs.img
+      - name: Upload to release (bypass artifact storage quota)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$(date +%m%d%H%M)"             --title "build $(date +%m%d-%H%M)"             --notes "mainline + builtin DTB + grub ESP (logdump)"             --latest || true
+          gh release upload "v$(date +%m%d%H%M)"             out/boot.img out/esp.img out-Image out-z40pro.dtb --clobber
       - name: Upload to release (bypass artifact storage quota)
         env:
           GH_TOKEN: ${{ github.token }}
