@@ -173,8 +173,12 @@
 		};
 
 		ramoops: region@c0000000 {
+			compatible = "ramoops";
 			no-map;
 			reg = <0x0 0xc0000000 0x0 0x200000>;
+			console-size = <0x40000>;
+			record-size = <0x1000>;
+			ecc-size = <16>;
 		};
 
 		qheebsp_reserved_region: region@e0000000 {
@@ -268,18 +272,6 @@
 			gpios = <&tlmm 43 GPIO_ACTIVE_LOW>;   /* TODO: 校准 */
 			debounce-interval = <15>;
 			wakeup-source;
-		};
-	};
-
-	reserved-memory {
-		/* 崩溃日志生命线: panic 后重启回 MyOS 可经 pstore 读取, 或 EDL rawdump */
-		ramoops@ffc00000 {
-			compatible = "ramoops";
-			reg = <0 0xffc00000 0 0x200000>;
-			console-size = <0x40000>;
-			record-size = <0x1000>;
-			ecc-size = <16>;
-			no-map;
 		};
 	};
 
