@@ -252,7 +252,7 @@
 		#size-cells = <1>;
 		ranges;
 		/* ZTE ABL 的 cmdline 被内建 DTB 覆盖丢弃, bootargs 必须在此 */
-		bootargs = "console=ttyMSM0,115200n8 earlycon=qcom_geni,0xa90000 panic=10 loglevel=7";
+		bootargs = "console=ttyMSM0,115200n8 earlycon=qcom_geni,0xa90000 panic=10 loglevel=7 keep_bootcon z40pro.fb=0xB8000000,4320,2400,1080,32";
 
 		framebuffer0: framebuffer@e2e00000 {
 			status = "disabled";   /* M5 点亮后启用 */
